@@ -1,1 +1,1 @@
-from mdsdl.fully_connected.fully_connected import dummy_function
+from mdsdl.utilities import train_test_split
