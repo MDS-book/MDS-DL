@@ -1,5 +1,9 @@
 # MDS-DL
 
+## Contributions
+The following people contributed to the repository:
+
+
 ## Change Log
 
 <b>0.1.0</b> (Jan 27, 2024)
