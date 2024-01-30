@@ -2,42 +2,17 @@ import pandas as pd
 import numpy as np
 from abc import ABC
 from tqdm import trange
+from mdsdl.utilities import tanh_function, tanh_derivative, MSE, dMSE_dy
 
 
-# ____________________________________________________________________________
-# Define a set of activation functions and their derivatives
-# Which one to use is hard coded in the classes below.
-def sigmoidal_function(x):
-    return 1 / (1 + np.exp(-x))
 
-
-def sigmoidal_derivative(x):
-    return sigmoidal_function(x)*(1.0 - sigmoidal_function(x))
-    
-    
-def tanh_function(x):
-    return np.tanh(x)
-
-
-def tanh_derivative(x):
-    return 1 - np.tanh(x) ** 2
-
-
-# ____________________________________________________________________________
-# Define the cost function and its derivative 
-def MSE(y_true, y_pred):
-    return np.mean((y_true - y_pred) ** 2)
-
-
-def dMSE_dy(y_true, y_pred):
-    return 2 / y_pred.size * (y_pred - y_true) 
 
 
 # ____________________________________________________________________________
 # Create an abstract base class for a generic layer of a neural network.
 # This defines the "structure" of any layer of the neural net -- any 
 # specialized layer should be derived from `NNLayer`: 
-class NNLayer:
+class NNLayer(ABC):
     """Abstract base class which serves as a "template" for fully connected
     layers and for activation layers.
 
@@ -45,7 +20,7 @@ class NNLayer:
     Also, each derived class should implement the two methods below (with the
     same signature)
     """
-    def __init__(ABC):
+    def __init__(self):
         self.x = np.empty()
         self.y = np.empty()
 
@@ -56,14 +31,16 @@ class NNLayer:
         :param x: numpy array of all inputs for one record
         :returns: numpy array of all output for one record
         """
-        raise NotImplementedError("Any layer needs to implement the feed_forward method.")
+        raise NotImplementedError("Any layer needs to implement the \
+                                  feed_forward method.")
 
     def backward_propagation(self, dJdy, learning_rate):
         """Backpropagate the error sensitivity to the input
         
         :returns: numpy array of dJ/dy of the previous layer
         """
-        raise NotImplementedError("Any layer needs to implement the backward_propagation method.")
+        raise NotImplementedError("Any layer needs to implement the \
+                                  backward_propagation method.")
 
 
 # ____________________________________________________________________________

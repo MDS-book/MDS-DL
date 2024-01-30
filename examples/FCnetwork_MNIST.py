@@ -2,8 +2,8 @@ import numpy as np
 from tqdm import trange
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
-from mdsdl.utilities import train_test_split
-from mdsdl.fully_connected.fully_connected import FCNetwork, FullyConnectedLayer, ActivationLayer, MSE, dMSE_dy
+from mdsdl.utilities import train_test_split, MSE, dMSE_dy
+from mdsdl.fully_connected import FCNetwork, FullyConnectedLayer, ActivationLayer
 
 digits = load_digits()
 print(digits.data.shape)
