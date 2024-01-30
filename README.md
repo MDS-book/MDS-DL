@@ -7,7 +7,7 @@
 
 <b>0.1.1</b> (Jan 27, 2024)
 - edit README.md
-- add 
+- add documentation
 
 
 <hr>
