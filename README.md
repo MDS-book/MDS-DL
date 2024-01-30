@@ -4,14 +4,14 @@
 The following people contributed to the repository:
 
 
-## Change Log
+<!-- ## Change Log
 
 <b>0.1.0</b> (Jan 27, 2024)
 - first release
 
 <b>0.1.1</b> (Jan 27, 2024)
 - edit README.md
-- add documentation
+- add documentation -->
 
 
 <hr>
