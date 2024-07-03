@@ -1,4 +1,9 @@
 # MDS-DL
+Sorry... this repository is not yet set up. For the Deep Learning examples from the MDS-book please refer to the MDS-code repository at
+[https://github.com/MDS-book/MDS-code](https://github.com/MDS-book/MDS-code)
+
+
+
 
 ## Contributions
 The following people contributed to the repository:

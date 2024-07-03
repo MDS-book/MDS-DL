@@ -134,7 +134,7 @@ class FCNetwork:
         :returns Y: target matrix with records in rows and target variables in columns
         """
         Y = []
-        for x in X:
+        for x in np.atleast_2d(X):
             y = x
             for layer in self.layers:
                 y = layer.feed_forward(y)
