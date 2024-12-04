@@ -1,8 +1,7 @@
-import pandas as pd
 import numpy as np
 from abc import ABC
 from tqdm import trange
-from mdsdl.utilities import tanh_function, tanh_derivative, MSE, MSE_derivative
+from mdsdl.utilities import tanh_function, tanh_derivative
 
 
 

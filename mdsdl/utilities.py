@@ -32,7 +32,7 @@ def sigmoidal_function(x):
 
 
 def sigmoidal_derivative(x):
-    return sigmoidal_function(x)*(1.0 - sigmoidal_function(x))
+    return sigmoidal_function(x) * (1 - sigmoidal_function(x))
     
     
 def tanh_function(x):
@@ -52,11 +52,19 @@ def ReLU_derivative(x):
 
 
 # ____________________________________________________________________________
-# Define the cost function and its derivative 
+# Define the cost function and its derivative
 def MSE(y_true, y_pred):
+    """Mean square error
+
+    This is a vectorized version that works both for scalars as well as vor numpy arrays.
+    """
     return np.mean((y_true - y_pred) ** 2)
 
 
 def MSE_derivative(y_true, y_pred):
+    """Derivative of the mean square error w.r.t. the predicted value
+
+    This is a vectorized version that works both for scalars as well as vor numpy arrays.
+    """
     return 2 / y_pred.size * (y_pred - y_true) 
 
