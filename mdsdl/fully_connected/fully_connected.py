@@ -2,9 +2,7 @@ import pandas as pd
 import numpy as np
 from abc import ABC
 from tqdm import trange
-from mdsdl.utilities import tanh_function, tanh_derivative, MSE, dMSE_dy
-
-
+from mdsdl.utilities import tanh_function, tanh_derivative, MSE, MSE_derivative
 
 
 
@@ -21,8 +19,8 @@ class NNLayer(ABC):
     same signature)
     """
     def __init__(self):
-        self.x = np.empty()
-        self.y = np.empty()
+        self.x = np.empty(0)
+        self.y = np.empty(0)
 
     def feed_forward(self, x):
         """Perform a forward step: compute output for given input     
@@ -35,7 +33,7 @@ class NNLayer(ABC):
                                   feed_forward method.")
 
     def backward_propagation(self, dJdy, learning_rate):
-        """Backpropagate the error sensitivity to the input
+        """Back-propagate the error sensitivity to the input
         
         :returns: numpy array of dJ/dy of the previous layer
         """
@@ -47,6 +45,12 @@ class NNLayer(ABC):
 # Do the concrete implementation of a FCL and a AL
 # Both of them are derived from the `NNLayer` ABC
 class FullyConnectedLayer(NNLayer):
+    """A fully connected layer
+
+    Does the weight initialization and provides methods for the feed forward and
+    the backward propagation.
+    """
+
     def __init__(self, n_inputs, n_outputs, seed=None):
         """Initialize the state of the FC layer.
 
@@ -55,6 +59,7 @@ class FullyConnectedLayer(NNLayer):
         :param seed: Used for seeding the random number generator.
         """
         # initialize the random number generator
+        super().__init__()
         rng = np.random.default_rng(seed)
 
         # initialize weights and bias values by sampling from in between -0.5 and 0.5
@@ -62,7 +67,7 @@ class FullyConnectedLayer(NNLayer):
         self.biases = rng.random(size=(1, n_outputs)) - 0.5
 
     def feed_forward(self, x):
-        # `atleast_2d` to ensure that np.dot(self.x.T, dJdy) also works for 1d array from the input layer
+        # `numpy.atleast_2d` to ensure that np.dot(self.x.T, dJdy) also works for 1d array from the input layer
         self.x = np.atleast_2d(x)  
         self.y = np.dot(self.x, self.weights) + self.biases
         return self.y
@@ -78,16 +83,18 @@ class FullyConnectedLayer(NNLayer):
 
 
 class ActivationLayer(NNLayer):
-    def __init__(self):
+    def __init__(self, activation_function=tanh_function, activation_derivative=tanh_derivative):
         """Store the activation function and its derivative for reuse
 
-        The function types are hard-coded as every AL should have the same activation function
+        You can change the activation function types for each layer but typically every
+        AL uses the same activation function.
         """
-        self.phi = tanh_function
-        self.dphidx = tanh_derivative
+        super().__init__()
+        self.phi = activation_function
+        self.dphidx = activation_derivative
 
     def feed_forward(self, x):
-        self.x = x
+        self.x = np.atleast_2d(x)
         self.y = self.phi(self.x)
         return self.y
 
@@ -112,14 +119,14 @@ class FCNetwork:
         for i in trange(epochs):
             cost = 0
             for x_train, y_train in zip(X_train, Y_train):
-                # compute prediction through forward propagations
+                # compute prediction by forward propagations through all layers
                 y_pred = x_train
                 for layer in self.layers:
                     y_pred = layer.feed_forward(y_pred)
 
                 cost += self.cost_function(y_train, y_pred)
 
-                # backprop. of errors
+                # backprop. of errors (changes weights and biases)
                 error = self.derivative_of_cost(y_train, y_pred)
                 for layer in reversed(self.layers):
                     error = layer.backward_propagation(error, learning_rate)
@@ -135,7 +142,7 @@ class FCNetwork:
         """
         Y = []
         for x in np.atleast_2d(X):
-            y = x
+            y = np.atleast_2d(x)
             for layer in self.layers:
                 y = layer.feed_forward(y)
             Y.append(y)

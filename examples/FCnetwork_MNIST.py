@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import trange
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
-from mdsdl.utilities import train_test_split, MSE, dMSE_dy
+from mdsdl.utilities import train_test_split, MSE, MSE_derivative
 from mdsdl.fully_connected import FCNetwork, FullyConnectedLayer, ActivationLayer
 
 digits = load_digits()
@@ -26,7 +26,7 @@ print("shape of Y_train:", Y_train.shape)
 X_train.shape
 
 
-nn = FCNetwork(MSE, dMSE_dy)
+nn = FCNetwork(MSE, MSE_derivative)
 
 nn.add_layer(FullyConnectedLayer(X_train.shape[-1], 80))
 nn.add_layer(ActivationLayer())

@@ -1,1 +1,1 @@
-from mdsdl.fully_connected.fully_connected import FCNetwork, FullyConnectedLayer, ActivationLayer, MSE, dMSE_dy
+from mdsdl.fully_connected.fully_connected import FCNetwork, FullyConnectedLayer, ActivationLayer, MSE, MSE_derivative

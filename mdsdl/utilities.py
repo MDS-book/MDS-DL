@@ -2,7 +2,7 @@ import numpy as np
 
 
 def train_test_split(X, Y, fraction, seed=None):
-    """Returns a training and a testing dataset
+    """Returns a random training and a testing dataset
 
     X and Y are numpy arrays with as many rows as data records, 
     fraction (=0..1) defines the relative amount of training data, 
@@ -25,7 +25,6 @@ def train_test_split(X, Y, fraction, seed=None):
     return X_training, Y_training, X_testing, Y_testing
 
 
-
 # ____________________________________________________________________________
 # Define a set of activation functions and their derivatives
 def sigmoidal_function(x):
@@ -44,12 +43,20 @@ def tanh_derivative(x):
     return 1 - np.tanh(x) ** 2
 
 
+def ReLU(x):
+    return np.maximum(0.,x)
+
+
+def ReLU_derivative(x):
+    return np.greater(x, 0.).astype(np.float32)
+
+
 # ____________________________________________________________________________
 # Define the cost function and its derivative 
 def MSE(y_true, y_pred):
     return np.mean((y_true - y_pred) ** 2)
 
 
-def dMSE_dy(y_true, y_pred):
+def MSE_derivative(y_true, y_pred):
     return 2 / y_pred.size * (y_pred - y_true) 
 
