@@ -67,6 +67,7 @@ class FullyConnectedLayer(NNLayer):
 
     def feed_forward(self, x):
         # `numpy.atleast_2d` to ensure that np.dot(self.x.T, dJdy) also works for 1d array from the input layer
+        # Then, the output is a 2D array
         self.x = np.atleast_2d(x)  
         self.y = np.dot(self.x, self.weights) + self.biases
         return self.y
