@@ -1,6 +1,6 @@
 import numpy as np
-from numpy import ndarray
-
+from numpy.typing import NDArray
+from typing import Union, Tuple
 
 class ReferenceNetworkWith2Units:
     """Reference Solution of a Network with 2 units and 1 output.
@@ -19,16 +19,19 @@ class ReferenceNetworkWith2Units:
     """
     #
     @staticmethod
-    def _sigmoidal_function(x: [float, ndarray]) -> [float, ndarray]:
+    def _sigmoidal_function(x: Union[float, NDArray[np.float64]]) -> Union[float, NDArray[np.float64]]:
         return 1 / (1 + np.exp(-x))
 
     @staticmethod
-    def _sigmoidal_derivative(x: [float, ndarray]) -> [float, ndarray]:
+    def _sigmoidal_derivative(x: Union[float, NDArray[np.float64]]) -> Union[float, NDArray[np.float64]]:
         s = ReferenceNetworkWith2Units._sigmoidal_function(x)
         return s * (1 - s)
 
     @staticmethod
-    def forward_pass(W, B, X1, X2):
+    def forward_pass(W: Tuple[float, float, float, float, float, float],
+                     B: Tuple[float, float, float],
+                     X1: Union[float, NDArray[np.float64]],
+                     X2: Union[float, NDArray[np.float64]]):
         (w1, w2, w3, w4, w5, w6), (b1, b2, b3) = W, B
 
         a1 = b1 + X1 * w1 + X2 * w2
