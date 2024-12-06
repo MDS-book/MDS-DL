@@ -66,6 +66,8 @@ class FullyConnectedLayer(NNLayer):
         self.biases = rng.random(size=(1, n_outputs)) - 0.5
 
     def feed_forward(self, x):
+        """Make a prediction and stores the input data as a array with >=2 dims.
+        """
         # `numpy.atleast_2d` to ensure that np.dot(self.x.T, dJdy) also works for 1d array from the input layer
         # Then, the output is a 2D array
         self.x = np.atleast_2d(x)  
@@ -73,13 +75,20 @@ class FullyConnectedLayer(NNLayer):
         return self.y
 
     def backward_propagation(self, dJdy, learning_rate):
+        """Also returns dJdW and dJdb for debugging purposes."""
         dJdW = np.dot(self.x.T, dJdy)
         dJdb = np.dot(np.ones(self.x.shape[0]), dJdy)  # results in a 1D array
+        #
+        # dJdb = np.dot(np.ones(...)) might fail for self.x.ndim==3 (minibatch)
+        # better: dJdb = np.sum(dJdy, axis=0, keepdims=True)
+
+        # Compute dJdx before updating weights
+        dJdy_prev = np.dot(dJdy, self.weights.T)  # also called dJdx
+
         self.weights -= learning_rate * dJdW
         self.biases -= learning_rate * dJdb
 
-        dJdy_prev = np.dot(dJdy, self.weights.T)  
-        return dJdy_prev
+        return dJdy_prev, dJdW, dJdb
 
 
 class ActivationLayer(NNLayer):
@@ -99,7 +108,9 @@ class ActivationLayer(NNLayer):
         return self.y
 
     def backward_propagation(self, dJdy, learning_rate):
-        return self.dphidx(self.x) * dJdy
+        dJdy_prev = self.dphidx(self.x) * dJdy
+        dJdW, dJdb = None, None  # the AL has no trainable weights
+        return dJdy_prev, dJdW, dJdb
 
 
 # ____________________________________________________________________________
@@ -129,7 +140,7 @@ class FCNetwork:
                 # backprop. of errors (changes weights and biases)
                 error = self.derivative_of_cost(y_train, y_pred)
                 for layer in reversed(self.layers):
-                    error = layer.backward_propagation(error, learning_rate)
+                    error, dJdW, dJdb = layer.backward_propagation(error, learning_rate)
 
             all_costs.append(cost / X_train.shape[0])
         return all_costs
