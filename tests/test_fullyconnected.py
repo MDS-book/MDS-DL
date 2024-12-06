@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from numpy import ndarray
 from mdsdl.utilities import tanh_function, tanh_derivative, sigmoidal_function, sigmoidal_derivative
 from mdsdl.fully_connected import FullyConnectedLayer, ActivationLayer
 
@@ -230,70 +231,33 @@ class TestActivationLayer:
         np.testing.assert_array_almost_equal(dJdx, expected_dJdx, err_msg="Activation backward propagation output mismatch")
 
 
+
+
+
 class TestWithReferenceNetwork:
+    """Tests using the reference implementation for 2 units with sigmoid activation
 
-    ######################################################################################################
-    # These are some helper functions for computing the forwards and backward pass
-    # for a network of 2 neurons, 2 inputs and a single output. As activation
-    # function, the sigmoidal function is hard-coded.
-    # Input (X1, X2) -> [FCL(2->2)] -> [Sigmoid AL] -> [FCL(2->1)] -> Output (Y_pred)
-    #
-    def _sigmoidal_function(self, x):
-        return 1 / (1 + np.exp(-x))
-
-    def _sigmoidal_derivative(self, x):
-        s = sigmoidal_function(x)
-        return s * (1 - s)
-
-    def _forward_pass(self, W, B, X1, X2):
-        (w1, w2, w3, w4, w5, w6), (b1, b2, b3) = W, B
-
-        a1 = b1 + X1 * w1 + X2 * w2
-        a2 = b2 + X1 * w3 + X2 * w4
-        y1 = self._sigmoidal_function(a1)
-        y2 = self._sigmoidal_function(a2)
-        a3 = y1 * w5 + y2 * w6 + b3
-        return a1, a2, y1, y2, a3
-
-    def _predict(self, W, B, X1, X2):
-        _, _, _, _, Y_pred = self._forward_pass(W, B, X1, X2)
-        return Y_pred
-
-    def _backward_pass(self, W, B, X1, X2, Y):
-        w1, w2, w3, w4, w5, w6 = W
-        a1, a2, y1, y2, a3 = self._forward_pass(W, B, X1, X2)
-
-        dJdb1 = -(Y - a3) * w5 * y1 * (1 - y1)
-        dJdw1 = dJdb1 * X1
-        dJdw2 = dJdb1 * X2
-        dJdb2 = -(Y - a3) * w6 * y2 * (1 - y2)
-        dJdw3 = dJdb2 * X1
-        dJdw4 = dJdb2 * X2
-        dJdb3 = -(Y - a3)
-        dJdw5 = -(Y - a3) * y1
-        dJdw6 = -(Y - a3) * y2
-
-        dJdW, dJdB = (dJdw1, dJdw2, dJdw3, dJdw4, dJdw5, dJdw6), (dJdb1, dJdb2, dJdb3)
-        return dJdW, dJdB
-    ######################################################################################################
+    """
 
     def test_two_unit_network_against_reference_with_1_record(self):
         # Given parameters (example values)
-        W = (0.1, 0.2, -0.3, 0.4, 0.5, -0.6)  # (w1,w2,w3,w4,w5,w6)
+        W = (0.1, 0.2, -0.3, 0.4, 0.5, -0.6)  # (unit 1: w1,w2, unit 2: w3,w4, unit 3: w5,w6)
         B = (0.1, -0.2, -0.1)  # (b1,b2,b3)
         X1, X2 = 0.5, -1.0
         Y = 0.7
 
         # Compute reference values
-        Y_pred_ref = self._predict(W, B, X1, X2)
-        dJdW_ref, dJdB_ref = self._backward_pass(W, B, X1, X2, Y)
+        Y_pred_ref = ReferenceNetworkWith2Units.predict(W, B, X1, X2)
+        dJdW_ref, dJdB_ref = ReferenceNetworkWith2Units.backward_pass(W, B, X1, X2, Y)
 
         # Set up the class-based network
         fcl1 = FullyConnectedLayer(n_inputs=2, n_outputs=2)
-        # Assign weights and biases to match reference
+        # Assign weights and biases to match reference. Since we're doing X * W the first
+        # two weights of unit 1 must be in the first column
         fcl1.weights = np.array([[W[0], W[2]],
                                  [W[1], W[3]]])
-        fcl1.biases = np.array([[B[0], B[1]]])
+        fcl1.biases = np.array([[B[0],
+                                 B[1]]])
 
         al = ActivationLayer(activation_function=sigmoidal_function,
                              activation_derivative=sigmoidal_derivative)
@@ -303,58 +267,52 @@ class TestWithReferenceNetwork:
                                  [W[5]]])
         fcl2.biases = np.array([[B[2]]])
 
-        a1, a2, y1, y2, y3 = self._forward_pass(W, B, X1, X2)
-        print("\nana. a1:", a1, "  a2:", a2)
-        print("     y1:", y1, "  y2:", y2, "  y3:", y3)
-        # a1 = 0.1 + 0.1 * 0.5 + 0.2 * (-1) = -0.05
-
         # Forward pass with class-based layers
         x_input = np.array([[X1, X2]])
         y_pred = fcl1.feed_forward(x_input)
-        print("a1:", y_pred)
-
         y_pred = al.feed_forward(y_pred)
-        print("y1:", y_pred)
-
-
         y_pred = fcl2.feed_forward(y_pred)
-        print("y3:", y_pred)
-
-
-        Y_pred_class = y_pred[0, 0]
+        Y_pred_class = y_pred[0, 0]  # all quantities are at least 2D
 
         # Check forward pass consistency
-        np.testing.assert_almost_equal(Y_pred_class, Y_pred_ref, decimal=7, err_msg="Forward pass mismatch")
-        #---------------------------------------------
+        np.testing.assert_almost_equal(Y_pred_class, Y_pred_ref, decimal=7,
+                                       err_msg="Forward pass mismatch")
+        #----------------------------------------------------------------------
 
-        # Now for backward pass:
-        # We'll compute gradients in the class-based approach. We must define a cost derivative:
-        # dJ/dy for MSE = (a3 - Y)
+        # Next is the backward pass where we compute gradients using the
+        # class-based implementation. We must define a cost  derivative dJ/dy
+        # because this is needed as input for backward_propagation(...):
+        # Assuming the cost is given by the MSE we have dJ/dy = (a3 - Y)
         dJdy = np.array([[Y_pred_class - Y]])  # shape (1, 1)
 
-        # Backprop through fcl2
-        dJdy_prev, fcl2_last_dJdW, fcl2_dJdb = fcl2.backward_propagation(dJdy, learning_rate=0.0)
+        # we're just using /any/ learning rate -- it doesn't matter, because
+        # we do not use any of the updated weights of a layer in subsequent steps.
+        learning_rate = 0.1
 
-        # Backprop through activation layer
-        dJdy_prev, _, _ = al.backward_propagation(dJdy_prev, learning_rate=0.0)
+        # Backprop through final layer fcl2 (the single unit)
+        dJdy_prev, fcl2_last_dJdW, fcl2_last_dJdb = \
+            fcl2.backward_propagation(dJdy, learning_rate)
 
-        # Backprop through fcl1
-        dJdy_prev, fcl1_dJdW, fcl1_dJdb = fcl1.backward_propagation(dJdy_prev, learning_rate=0.0)
+        # Backprop through the two hidden units = FCL + AL layer:
+        # a) activation layer: the input of the current layer x is the
+        #    output y of the previous layer
+        dJdy_prev, _, _ = al.backward_propagation(dJdy_prev, learning_rate)
+        #
+        # b) first layer fcl1
+        dJdy_prev, fcl1_last_dJdW, fcl1_last_dJdb = \
+            fcl1.backward_propagation(dJdy_prev, learning_rate)
 
-        # At this point, we need the gradients. Let's assume we've modified our FullyConnectedLayer
-        # to store the last computed gradients in attributes `last_dJdW` and `last_dJdb` for testing.
-        # If not, you would need to adapt your code accordingly.
-
-        # Extract gradients from class-based layers
-        # fcl1: weights shape (2,2) corresponds to w1,w2 in row 0, w3,w4 in row 1
-        # fcl2: weights shape (2,1) corresponds to w5,w6
-        print(fcl1_dJdW.shape)
-        dJdw1_class, dJdw2_class = fcl1_dJdW[0, 0], fcl1_dJdW[1, 0]
-        dJdw3_class, dJdw4_class = fcl1_dJdW[0, 1], fcl1_dJdW[1, 1]
+        # Extract gradients from class-based layers and rearrange them in a
+        # set such that they can be compared with the reference solution's
+        # dJdW and dJdB:
+        # fcl1: weights with shape (2,2) corresponds to w1,w2 in column 0, w3,w4 in column 1
+        # fcl2: weights shape (2,1) corresponds to w5,w6 in the first and only column
+        dJdw1_class, dJdw2_class = fcl1_last_dJdW[0, 0], fcl1_last_dJdW[1, 0]
+        dJdw3_class, dJdw4_class = fcl1_last_dJdW[0, 1], fcl1_last_dJdW[1, 1]
         dJdw5_class, dJdw6_class = fcl2_last_dJdW[0, 0], fcl2_last_dJdW[1, 0]
 
-        dJdw1_class, dJdw2_class = fcl1_dJdW[0, 0], fcl1_dJdW[1, 0]
-        dJdw3_class, dJdw4_class = fcl1_dJdW[0, 1], fcl1_dJdW[1, 1]
+        dJdb1_class, dJdb2_class = fcl1_last_dJdb[0], fcl1_last_dJdb[1]
+        dJdb3_class = fcl2_last_dJdb[0]
 
         dJdW_class = (dJdw1_class, dJdw2_class, dJdw3_class, dJdw4_class, dJdw5_class, dJdw6_class)
         dJdB_class = (dJdb1_class, dJdb2_class, dJdb3_class)

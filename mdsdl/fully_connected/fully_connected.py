@@ -66,7 +66,11 @@ class FullyConnectedLayer(NNLayer):
         self.biases = rng.random(size=(1, n_outputs)) - 0.5
 
     def feed_forward(self, x):
-        """Make a prediction and stores the input data as a array with >=2 dims.
+        """Performs a feed forward step and stores the input data
+
+        The returned value has the same shape as the input `x` but
+        is at least a 2D array of shape (n_records, n_inputs), where
+        n_inputs is the number of inputs to this layer.
         """
         # `numpy.atleast_2d` to ensure that np.dot(self.x.T, dJdy) also works for 1d array from the input layer
         # Then, the output is a 2D array
@@ -103,6 +107,12 @@ class ActivationLayer(NNLayer):
         self.dphidx = activation_derivative
 
     def feed_forward(self, x):
+        """Performs a feed forward step and stores the input data
+
+        The returned value has the same shape as the input `x` but
+        is at least a 2D array of shape (n_records, n_inputs), where
+        n_inputs is the number of inputs to this layer.
+        """
         self.x = np.atleast_2d(x)
         self.y = self.phi(self.x)
         return self.y
