@@ -27,7 +27,7 @@ def train_test_split(X, Y, fraction, seed=None):
 
 # ____________________________________________________________________________
 # Define a set of activation functions and their derivatives
-def sigmoidal_function(x):
+def sigmoidal_function(x: float | np.ndarray) -> float | np.ndarray:
     return 1 / (1 + np.exp(-x))
 
 
@@ -56,9 +56,11 @@ def ReLU_derivative(x):
 def MSE(y_true, y_pred):
     """Mean square error
 
-    This is a vectorized version that works both for scalars as well as vor numpy arrays.
+    This is a vectorized version that works both for scalars as well
+    as vor numpy arrays. We divide by 2 to make it consistent with the
+    reference code for testing (MDS-book, p.503)
     """
-    return np.mean((y_true - y_pred) ** 2)
+    return 0.5 * np.mean((y_true - y_pred) ** 2)
 
 
 def MSE_derivative(y_true, y_pred):
@@ -66,5 +68,5 @@ def MSE_derivative(y_true, y_pred):
 
     This is a vectorized version that works both for scalars as well as vor numpy arrays.
     """
-    return 2 / y_pred.size * (y_pred - y_true) 
+    return (y_pred - y_true) / y_pred.size
 

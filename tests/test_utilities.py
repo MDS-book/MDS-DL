@@ -60,7 +60,7 @@ def test_MSE():
     # Manually compute the squared differences to validate the square operation
     # differences = y_true - y_pred  # [-3, -3, -3]
     # squared_differences = differences ** 2  # [9, 9, 9]
-    expected = 9 #np.mean(squared_differences)  # (9 + 9 + 9) / 3 = 9.0
+    expected = 4.5 #0.5 * np.mean(squared_differences)  # (9 + 9 + 9) / 3 = 9.0
     result = MSE(y_true, y_pred)
     assert result == expected, f"Expected MSE of {expected}, got {result}"
 
@@ -69,7 +69,7 @@ def test_MSE():
     y_pred = np.array([1, 2, 3])
     #differences = y_true - y_pred  # [-2, -4, -6]
     #squared_differences = differences ** 2  # [4, 16, 36]
-    expected = 18.6667  # np.mean(squared_differences)  # (4 + 16 + 36) / 3 = 56 / 3 ≈ 18.6667
+    expected = 18.6667 / 2. # 0.5 * np.mean(squared_differences)  # (4 + 16 + 36) / 3 = 56 / 3 ≈ 18.6667
     result = MSE(y_true, y_pred)
     assert np.isclose(result, expected), f"Expected MSE of {expected}, got {result}"
 
@@ -77,14 +77,14 @@ def test_MSE_derivative():
     # Test derivative when predictions are greater than true values
     y_true = np.array([1, 2, 3])
     y_pred = np.array([4, 5, 6])
-    expected = 2 / y_pred.size * (y_pred - y_true)  # [2, 2, 2]
+    expected = (y_pred - y_true) / y_pred.size  # [2, 2, 2]
     result = MSE_derivative(y_true, y_pred)
     np.testing.assert_array_equal(result, expected)
 
     # Test derivative with negative differences
     y_true = np.array([1, 2, 3])
     y_pred = np.array([-2, -1, 0])
-    expected = 2 / y_pred.size * (y_pred - y_true)  # [-2, -2, -2]
+    expected = 1 / y_pred.size * (y_pred - y_true)  # [-2, -2, -2]
     result = MSE_derivative(y_true, y_pred)
     np.testing.assert_array_equal(result, expected)
 

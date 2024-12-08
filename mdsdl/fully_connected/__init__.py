@@ -1,1 +1,2 @@
-from mdsdl.fully_connected.fully_connected import FCNetwork, FullyConnectedLayer, ActivationLayer
+from mdsdl.fully_connected.layers import FullyConnectedLayer, ActivationLayer
+from mdsdl.fully_connected.fc_network import FCNetwork

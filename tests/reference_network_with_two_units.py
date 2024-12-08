@@ -48,6 +48,7 @@ class ReferenceNetworkWith2Units:
 
     @staticmethod
     def backward_pass(W, B, X1, X2, Y):
+        #:todo: the backward pass should include the weight/bias update to be consistent with the class-based code and best practices
         w1, w2, w3, w4, w5, w6 = W
         a1, a2, y1, y2, a3 = ReferenceNetworkWith2Units.forward_pass(W, B, X1, X2)
 
@@ -61,5 +62,16 @@ class ReferenceNetworkWith2Units:
         dJdw5 = -(Y - a3) * y1
         dJdw6 = -(Y - a3) * y2
 
+        # This is the version from the MDS-book:
         dJdW, dJdB = (dJdw1, dJdw2, dJdw3, dJdw4, dJdw5, dJdw6), (dJdb1, dJdb2, dJdb3)
+        # Here, if x1 and x2 are vectors, the dJdwi are also vectors with one entry for ach record
+        # For the weight update they still need to be average over all records!
+
+        #
+        # This here is the aggregation and averaging of the weight increments which is important
+        # for the vectorized version where we accumulate the weight difference for all records.
+        # dJdW, dJdB = (np.mean(dJdw1), np.mean(dJdw2), np.mean(dJdw3), np.mean(dJdw4), np.mean(dJdw5), np.mean(dJdw6)), \
+        #     (np.mean(dJdb1), np.mean(dJdb2), np.mean(dJdb3))
+        # Everything else is automatically vectorizable
+
         return dJdW, dJdB

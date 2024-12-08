@@ -3,10 +3,7 @@ import numpy as np
 from numpy import ndarray
 from mdsdl.utilities import tanh_function, tanh_derivative, sigmoidal_function, sigmoidal_derivative
 from mdsdl.fully_connected import FullyConnectedLayer, ActivationLayer
-
-
-
-
+from tests.reference_network_with_two_units import ReferenceNetworkWith2Units
 
 
 class TestFullyConnectedLayer:
@@ -211,6 +208,7 @@ class TestFullyConnectedLayer:
         # expected_dJdx = np.dot(dJdy, old_weights.T)
         # np.testing.assert_array_almost_equal(dJdx, expected_dJdx, err_msg="Backward propagation output mismatch with multiple records")
 
+
 class TestActivationLayer:
     def test_activation_layer_feed_forward(self):
         activation_layer = ActivationLayer(activation_function=tanh_function,
@@ -219,6 +217,7 @@ class TestActivationLayer:
         expected_output = np.tanh(x)
         output = activation_layer.feed_forward(x)
         np.testing.assert_array_almost_equal(output, expected_output, err_msg="Activation feed forward output mismatch")
+
 
     def test_activation_layer_backward_propagation(self):
         activation_layer = ActivationLayer(activation_function=tanh_function,
@@ -231,12 +230,8 @@ class TestActivationLayer:
         np.testing.assert_array_almost_equal(dJdx, expected_dJdx, err_msg="Activation backward propagation output mismatch")
 
 
-
-
-
 class TestWithReferenceNetwork:
     """Tests using the reference implementation for 2 units with sigmoid activation
-
     """
 
     def test_two_unit_network_against_reference_with_1_record(self):

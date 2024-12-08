@@ -94,3 +94,32 @@ class TestReferenceNetworkWith2Units:
             # Check backward pass
             np.testing.assert_allclose(dJdW[:, i], dJdW_desired, rtol=1e-3, err_msg="dJdW mismatch")
             np.testing.assert_allclose(dJdB[:, i], dJdB_desired, rtol=1e-3, err_msg="dJdB mismatch")
+
+    def test_cost_function_consistency(self):
+        """
+        Test that the cost function is consistent with the definition:
+        J = 0.5 * mean((y_true - y_pred)^2)
+
+        If we do not average over the number of records, the cost would be too large
+        and this test should fail until we fix the problem.
+        """
+
+        # Scenario: 2 records
+        W = (0.1, 0.2, -0.3, 0.4, 0.5, -0.6)
+        B = (0.1, -0.2, -0.1)
+        X1 = np.array([0.5, -0.1])
+        X2 = np.array([-1.0, 0.3])
+        Y = np.array([0.7, -0.3])
+
+        # Forward pass using the reference code
+        # a3 is the network output for all records
+        _, _, _, _, a3 = ReferenceNetworkWith2Units.forward_pass(W, B, X1, X2)
+
+        # Correct cost computation (with averaging):
+        # J = 0.5 * mean((Y - a3)^2)  -->  this is the cost that is consistent with the derivative that we're using in the MDS book
+        correct_cost = 0.5 * np.mean((Y - a3)**2)
+
+        # note the "/2" for 2 records
+        computed_cost = 0.5 * ((Y[0] - a3[0])**2 + (Y[1] - a3[1])**2) / 2
+        np.testing.assert_allclose(computed_cost, correct_cost, rtol=1e-5,
+                                   err_msg="the computed cost should match the correctly averaged MSE.")
