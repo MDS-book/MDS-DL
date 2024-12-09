@@ -306,8 +306,8 @@ class TestWithReferenceNetwork:
         dJdw3_class, dJdw4_class = fcl1_last_dJdW[0, 1], fcl1_last_dJdW[1, 1]
         dJdw5_class, dJdw6_class = fcl2_last_dJdW[0, 0], fcl2_last_dJdW[1, 0]
 
-        dJdb1_class, dJdb2_class = fcl1_last_dJdb[0], fcl1_last_dJdb[1]
-        dJdb3_class = fcl2_last_dJdb[0]
+        dJdb1_class, dJdb2_class = fcl1_last_dJdb[0, 0], fcl1_last_dJdb[0, 1]
+        dJdb3_class = fcl2_last_dJdb[0, 0]
 
         dJdW_class = (dJdw1_class, dJdw2_class, dJdw3_class, dJdw4_class, dJdw5_class, dJdw6_class)
         dJdB_class = (dJdb1_class, dJdb2_class, dJdb3_class)
@@ -315,3 +315,66 @@ class TestWithReferenceNetwork:
         # Compare gradients
         np.testing.assert_almost_equal(dJdW_class, dJdW_ref, decimal=7, err_msg="Weight gradients mismatch")
         np.testing.assert_almost_equal(dJdB_class, dJdB_ref, decimal=7, err_msg="Bias gradients mismatch")
+
+
+
+
+def test_batch_gradient_descent_with_reference():
+    """Test that the batch gradient descent updates in FCNetwork match the reference implementation."""
+    # Initialize weights and biases for the reference network
+    W_ref = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
+    B_ref = (0.1, 0.2, 0.3)
+
+    # Training data (X1, X2 as inputs, Y as target)
+    X1 = np.array([0.1, 0.2, 0.3])
+    X2 = np.array([0.4, 0.5, 0.6])
+    Y = np.array([0.7, 0.8, 0.9])
+
+    # Learning rate
+    learning_rate = 0.01
+
+    # Reference implementation: Compute weight and bias updates
+    dJdW_ref, dJdB_ref = ReferenceNetworkWith2Units.backward_pass(W_ref, B_ref, X1, X2, Y)
+
+    # Initialize an FCNetwork matching the reference network's structure
+    network = FCNetwork(MSE, MSE_derivative)
+    network.add_layer(FullyConnectedLayer(2, 2, seed=42))  # Input to 2 hidden neurons
+    network.add_layer(ActivationLayer(sigmoidal_function, sigmoidal_derivative))
+    network.add_layer(FullyConnectedLayer(2, 1, seed=42))  # Hidden to output neuron
+    network.add_layer(ActivationLayer(sigmoidal_function, sigmoidal_derivative))
+
+    # Manually set weights and biases to match the reference implementation
+    network.layers[0].weights = np.array([[0.1, 0.3], [0.2, 0.4]])  # W_ref[:4] reshaped
+    network.layers[0].biases = np.array([[0.1, 0.2]])               # B_ref[:2]
+    network.layers[2].weights = np.array([[0.5], [0.6]])           # W_ref[4:]
+    network.layers[2].biases = np.array([[0.3]])                   # B_ref[2]
+
+    # Forward pass with the batch
+    X_batch = np.column_stack((X1, X2))  # Combine X1 and X2 into a 2D array
+    Y_batch = Y.reshape(-1, 1)           # Reshape Y into a column vector
+
+    # Perform one training step (manual backpropagation) in the FCNetwork
+    y_pred = X_batch
+    for layer in network.layers:
+        y_pred = layer.feed_forward(y_pred)
+
+    # Backpropagation
+    error = MSE_derivative(Y_batch, y_pred)
+    for layer in reversed(network.layers):
+        error, dJdW, dJdB = layer.backward_propagation(error, learning_rate)
+
+    # Extract weight and bias updates from the FCNetwork
+    dJdW_fc = (
+        np.mean(network.layers[0].weights - dJdW, axis=0),
+        np.mean(network.layers[2].weights - dJdW, axis=0),
+    )
+    dJdB_fc = (
+        np.mean(network.layers[0].biases - dJdB, axis=0),
+        np.mean(network.layers[2].biases - dJdB, axis=0),
+    )
+
+    # Compare updates
+    assert np.allclose(dJdW_fc[0], dJdW_ref[:2]), "Weight updates (hidden layer) do not match"
+    assert np.allclose(dJdW_fc[1], dJdW_ref[4:]), "Weight updates (output layer) do not match"
+    assert np.allclose(dJdB_fc[0], dJdB_ref[:2]), "Bias updates (hidden layer) do not match"
+    assert np.allclose(dJdB_fc[1], dJdB_ref[2]), "Bias updates (output layer) do not match"

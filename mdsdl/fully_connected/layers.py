@@ -25,7 +25,9 @@ class NNLayer(ABC):
     def feed_forward(self, x):
         """Perform a forward step: compute output for given input     
         and additionally store the input and output vectors
-        
+
+        :todo: x should always have shape = n_records x n_features, even if it is just a single record. Consequence: we don't need np.at_least2d() in each implementation of predict/feed_forward
+
         :param x: numpy array of all inputs for one record
         :returns: numpy array of all output for one record
         """
@@ -80,12 +82,16 @@ class FullyConnectedLayer(NNLayer):
         return self.y
 
     def backward_propagation(self, dJdy, learning_rate):
-        """Also returns dJdW and dJdb for debugging purposes."""
+        """Also returns dJdW and dJdb for debugging purposes.
+        dJdW: (n_inputs, n_outputs)
+        dJdb: (1, n_outputs)
+        """
         dJdW = np.dot(self.x.T, dJdy)
-        dJdb = np.dot(np.ones(self.x.shape[0]), dJdy)  # results in a 1D array
-        #
-        # dJdb = np.dot(np.ones(...)) might fail for self.x.ndim==3 (minibatch)
-        # better: dJdb = np.sum(dJdy, axis=0, keepdims=True)
+
+        # axis=0: Sums across the mini-batch dimension.
+        # keepdims=True: Ensures the resulting shape is consistent with the biases' shape.
+        dJdb = np.sum(dJdy, axis=0, keepdims=True)
+        #dJdb = np.dot(np.ones(self.x.shape[0]), dJdy)  # results in a 1D array
 
         # Compute dJdx before updating weights
         dJdy_prev = np.dot(dJdy, self.weights.T)  # also called dJdx

@@ -2,7 +2,6 @@ import numpy as np
 from tqdm import trange
 from mdsdl.utilities import MSE, MSE_derivative, sigmoidal_derivative, sigmoidal_function
 from mdsdl.fully_connected import FullyConnectedLayer, ActivationLayer
-from tests.reference_network_with_two_units import ReferenceNetworkWith2Units
 
 
 # ____________________________________________________________________________
@@ -45,8 +44,7 @@ class FCNetwork:
         """
         Y = []
         for x in np.atleast_2d(X):
-            #y = np.atleast_2d(x) # not needed as all feed_forward methods do this by themselves
-            y = x
+            y = np.atleast_2d(x)
             for layer in self.layers:
                 y = layer.feed_forward(y)
             Y.append(y)
